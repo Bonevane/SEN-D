@@ -4,14 +4,12 @@ from PIL import Image
 from torchvision import transforms
 import torchvision.transforms.functional as F
 
-# Where your original dataset is
-INPUT_DATASET = 'Dataset/Train'  # e.g., Dataset/Train or Dataset/Test
-# Where to save the augmented dataset
-OUTPUT_DATASET = 'Dataset_Augmented/Train'
+INPUT_DATASET = 'Dataset/Train'  # Path to the original dataset
+OUTPUT_DATASET = 'Dataset_Augmented/Train' # Path to store the augmented dataset
 
-IMG_SIZE = 299  # match InceptionV3 input size
+IMG_SIZE = 299  # Size to which images will be resized
 
-# Define individual deterministic transformations
+# Individual transformations
 def flip_vertical(img):
     return F.vflip(img)
 
@@ -26,7 +24,7 @@ def width_shift(img):
 
 def rotation_range(img):
     import random
-    angle = random.uniform(-15, 15)  # Random angle between -15 and +15 degrees
+    angle = random.uniform(-15, 15)
     return F.rotate(img, angle=angle)
 
 def shear_range(img):
@@ -65,13 +63,11 @@ for cls in classes:
         base_name = os.path.splitext(os.path.basename(img_path))[0]
         image = Image.open(img_path).convert('RGB')
 
-        # Resize first
+        # Resizing and saving original image
         resized = resize_transform(image)
-        
-        # Save original resized version
         resized.save(os.path.join(output_cls_dir, f"{base_name}_orig.png"))
 
-        # Apply each individual transformation and save separately
+        # Applying each individual transformation and saving
         for transform_name, transform_fn in individual_transforms.items():
             try:
                 transformed = transform_fn(resized)
@@ -80,4 +76,4 @@ for cls in classes:
             except Exception as e:
                 print(f"Warning: Failed to apply {transform_name} to {base_name}: {e}")
 
-print(f"\n✅ Done. Augmented dataset stored at: {OUTPUT_DATASET}")
+print(f"\nDone! Augmented dataset stored at: {OUTPUT_DATASET}")
