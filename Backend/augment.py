@@ -56,14 +56,20 @@ for cls in classes:
     output_cls_dir = os.path.join(OUTPUT_DATASET, cls)
     os.makedirs(output_cls_dir, exist_ok=True)
 
-    image_files = glob.glob(os.path.join(input_cls_dir, '*.png'))  # assuming PNG
-    print(f"[{cls}] Found {len(image_files)} original images.")
+    # Get image files
+    png_files = glob.glob(os.path.join(input_cls_dir, '*.png'))
+    jpg_files = glob.glob(os.path.join(input_cls_dir, '*.jpg'))
+    jpeg_files = glob.glob(os.path.join(input_cls_dir, '*.jpeg'))
+    
+    # Combine all image files
+    image_files = png_files + jpg_files + jpeg_files
+    print(f"[{cls}] Found {len(image_files)} original images (PNG: {len(png_files)}, JPG: {len(jpg_files)}, JPEG: {len(jpeg_files)}).")
     
     for img_path in image_files:
         base_name = os.path.splitext(os.path.basename(img_path))[0]
         image = Image.open(img_path).convert('RGB')
 
-        # Resizing and saving original image
+        # Resizing and saving original image (using PNG for consistency)
         resized = resize_transform(image)
         resized.save(os.path.join(output_cls_dir, f"{base_name}_orig.png"))
 
