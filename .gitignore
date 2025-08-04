@@ -1,1 +1,4 @@
 Dataset_Augmented
+
+__pycache__/
+*.pyc
