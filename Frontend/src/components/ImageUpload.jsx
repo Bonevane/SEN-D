@@ -120,7 +120,7 @@ const ImageUpload = ({
             {!isLoading && (
               <button
                 onClick={onClearImage}
-                className="p-2 text-gray-400 hover:text-[#e91e4d] transition-colors"
+                className="p-2 text-gray-400 hover:text-[#e91e4d] transition-colors cursor-pointer"
               >
                 <FiX size={20} />
               </button>

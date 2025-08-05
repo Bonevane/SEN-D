@@ -1,18 +1,20 @@
 import React, { useState } from "react";
-import { FiLayers, FiEye, FiDownload, FiClock } from "react-icons/fi";
-import AnimatedCard from "./AnimatedCard";
-import { downloadImage } from "../utils/imageUtils";
+import {
+  FiClock,
+  FiDownload,
+  FiEye,
+  FiBarChart,
+  FiLayers,
+} from "react-icons/fi";
 
 const ResultCard = ({
   title,
   prediction,
   confidence,
   probabilities,
-  gradcam,
-  overlay,
   processingTime,
 }) => {
-  const isPositive = prediction?.toLowerCase().includes("stone");
+  const isPositive = prediction === "Kidney_stone";
 
   return (
     <div className="bg-white rounded-xl shadow-lg overflow-hidden">
@@ -22,7 +24,7 @@ const ResultCard = ({
           {processingTime && (
             <div className="flex items-center space-x-1 text-gray-500 text-sm">
               <FiClock size={14} />
-              <span>{processingTime.toFixed(1)}s</span>
+              <span>{parseFloat(processingTime).toFixed(2)}s</span>
             </div>
           )}
         </div>
@@ -76,69 +78,130 @@ const ResultCard = ({
             </div>
           </div>
         )}
+      </div>
+    </div>
+  );
+};
 
-        {(gradcam || overlay) && (
-          <div className="space-y-4">
-            <h4 className="text-sm font-medium text-gray-700 flex items-center space-x-2">
-              <FiEye size={16} />
-              <span>Grad-CAM Visualization</span>
-            </h4>
+const ComparisonTable = ({ results }) => {
+  const downloadImage = (base64Data, filename) => {
+    const link = document.createElement("a");
+    link.href = `data:image/png;base64,${base64Data}`;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {overlay && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-gray-600">
-                      Overlay
-                    </span>
-                    <button
-                      onClick={() =>
-                        downloadImage(
-                          overlay,
-                          `${title.toLowerCase()}_overlay.png`
-                        )
-                      }
-                      className="p-1 text-gray-400 hover:text-[#e91e4d] transition-colors"
-                    >
-                      <FiDownload size={14} />
-                    </button>
-                  </div>
-                  <img
-                    src={`data:image/png;base64,${overlay}`}
-                    alt="Grad-CAM Overlay"
-                    className="w-full h-32 object-contain bg-gray-50 rounded-lg"
-                  />
-                </div>
-              )}
+  const tableData = [
+    {
+      model: "Ensemble",
+      prediction: results.ensemble.prediction,
+      confidence: (results.ensemble.confidence * 100).toFixed(1),
+      kidneyStoneProb: (
+        results.ensemble.probabilities.Kidney_stone * 100
+      ).toFixed(1),
+      normalProb: (results.ensemble.probabilities.Normal * 100).toFixed(1),
+    },
+    ...Object.entries(results.individual_models).map(([modelName, data]) => ({
+      model: modelName
+        .replace(/_/g, " ")
+        .replace(/\b\w/g, (l) => l.toUpperCase()),
+      prediction: data.prediction,
+      confidence: (data.confidence * 100).toFixed(1),
+      kidneyStoneProb: (data.probabilities.Kidney_stone * 100).toFixed(1),
+      normalProb: (data.probabilities.Normal * 100).toFixed(1),
+    })),
+  ];
 
-              {gradcam && (
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-gray-600">
-                      Heatmap
-                    </span>
-                    <button
-                      onClick={() =>
-                        downloadImage(
-                          gradcam,
-                          `${title.toLowerCase()}_heatmap.png`
-                        )
-                      }
-                      className="p-1 text-gray-400 hover:text-[#e91e4d] transition-colors"
-                    >
-                      <FiDownload size={14} />
-                    </button>
-                  </div>
-                  <img
-                    src={`data:image/png;base64,${gradcam}`}
-                    alt="Grad-CAM Heatmap"
-                    className="w-full h-32 object-contain bg-gray-50 rounded-lg"
-                  />
-                </div>
-              )}
-            </div>
+  return (
+    <div className="space-y-6">
+      {/* Results Table */}
+      <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+        <div className="p-6">
+          <div className="flex items-center space-x-2 mb-4">
+            <FiBarChart className="text-[#e91e4d]" size={20} />
+            <h3 className="text-xl font-semibold text-[#212121]">
+              Model Comparison Results
+            </h3>
           </div>
-        )}
+
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-gray-200">
+                  <th className="text-left py-3 px-4 font-semibold text-gray-700">
+                    Model
+                  </th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-700">
+                    Prediction
+                  </th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-700">
+                    Confidence
+                  </th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-700">
+                    Kidney Stone
+                  </th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-700">
+                    Normal
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {tableData.map((row, index) => (
+                  <tr
+                    key={row.model}
+                    className={`border-b border-gray-100 ${
+                      index === 0 ? "bg-[#FCE4EC]" : "hover:bg-gray-50"
+                    }`}
+                  >
+                    <td className="py-3 px-4">
+                      <div className="flex items-center space-x-2">
+                        {index === 0 && (
+                          <FiLayers className="text-[#e91e4d]" size={16} />
+                        )}
+                        <span
+                          className={`font-medium ${
+                            index === 0 ? "text-[#ad1442]" : "text-gray-900"
+                          }`}
+                        >
+                          {row.model}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="py-3 px-4">
+                      <span
+                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                          row.prediction === "Kidney_stone"
+                            ? "bg-red-100 text-red-800"
+                            : "bg-green-100 text-green-800"
+                        }`}
+                      >
+                        {row.prediction.replace("_", " ")}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 font-semibold text-gray-900">
+                      {row.confidence}%
+                    </td>
+                    <td className="py-3 px-4 text-red-600 font-medium">
+                      {row.kidneyStoneProb}%
+                    </td>
+                    <td className="py-3 px-4 text-green-600 font-medium">
+                      {row.normalProb}%
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mt-4 flex items-center justify-between text-sm text-gray-500">
+            <span>
+              Processing Time: {parseFloat(results.processing_time).toFixed(2)}s
+            </span>
+            <span>Models Used: {results.num_models}</span>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -150,77 +213,124 @@ const ResultTabs = ({ results }) => {
   const tabs = [
     {
       id: "ensemble",
-      label: "Ensemble Results",
+      label: "Ensemble",
       icon: FiLayers,
       data: results.ensemble,
     },
-    {
-      id: "inception_v3",
-      label: "InceptionV3",
-      icon: FiEye,
-      data: results.individual_models?.inception_v3,
-    },
-    {
-      id: "inception_resnet_v2",
-      label: "InceptionResNetV2",
-      icon: FiEye,
-      data: results.individual_models?.inception_resnet_v2,
-    },
-    {
-      id: "xception",
-      label: "Xception",
-      icon: FiEye,
-      data: results.individual_models?.xception,
-    },
+    ...Object.entries(results.individual_models).map(([key, data]) => ({
+      id: key,
+      label: key.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()),
+      icon: FiBarChart,
+      data,
+    })),
   ];
 
+  const activeTabData = tabs.find((tab) => tab.id === activeTab);
+
   return (
-    <div className="w-full max-w-6xl mx-auto">
-      {/* Tab Navigation */}
-      <div className="flex flex-wrap border-b border-gray-200 mb-6">
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center space-x-2 px-4 py-3 font-medium text-sm transition-colors border-b-2 cursor-pointer ${
-                activeTab === tab.id
-                  ? "text-[#e91e4d] border-[#e91e4d]"
-                  : "text-gray-500 border-transparent hover:text-gray-700"
-              }`}
-            >
-              <Icon size={16} />
-              <span>{tab.label}</span>
-            </button>
-          );
-        })}
+    <div className="space-y-6">
+      <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+        {/* Tab Navigation */}
+        <div className="border-b border-gray-200">
+          <nav className="flex space-x-8 px-6">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center space-x-2 py-4 px-1 border-b-2 font-medium text-sm transition-colors cursor-pointer ${
+                    activeTab === tab.id
+                      ? "border-[#e91e4d] text-[#e91e4d]"
+                      : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                  }`}
+                >
+                  <Icon size={16} />
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+
+        {/* Tab Content */}
+        <div>
+          {activeTab === "ensemble" ? (
+            <ComparisonTable results={results} />
+          ) : (
+            <ResultCard
+              title={activeTabData.label}
+              prediction={activeTabData.data.prediction}
+              confidence={Math.round(activeTabData.data.confidence * 100)}
+              probabilities={activeTabData.data.probabilities}
+            />
+          )}
+        </div>
       </div>
 
-      {/* Tab Content */}
-      <div className="min-h-[400px]">
-        {tabs.map((tab) => (
-          <AnimatedCard
-            key={tab.id}
-            className={`${activeTab === tab.id ? "block" : "hidden"}`}
-            animation="fadeIn"
-            duration={400}
-          >
-            {tab.data && (
-              <ResultCard
-                title={tab.label}
-                prediction={tab.data.prediction}
-                confidence={Math.round(tab.data.confidence * 100)}
-                probabilities={tab.data.probabilities}
-                gradcam={tab.data.gradcam_heatmap}
-                overlay={tab.data.gradcam_overlay}
-                processingTime={
-                  tab.id === "ensemble" ? results.processing_time : null
-                }
-              />
+      {/* Grad-CAM Visualization Section */}
+      <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+        <div className="p-6">
+          <div className="flex items-center space-x-2 mb-6">
+            <FiEye className="text-[#e91e4d]" size={20} />
+            <h3 className="text-xl font-semibold text-[#212121]">
+              Grad-CAM Visualizations
+            </h3>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {Object.entries(results.individual_models).map(
+              ([modelName, data]) => (
+                <div key={modelName} className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-semibold text-gray-800 capitalize">
+                      {modelName.replace(/_/g, " ")}
+                    </h4>
+                    {data.gradcam_overlay && (
+                      <button
+                        onClick={() =>
+                          downloadImage(
+                            data.gradcam_overlay,
+                            `${modelName}_gradcam.png`
+                          )
+                        }
+                        className="p-1 text-gray-400 hover:text-[#e91e4d] transition-colors cursor-pointer"
+                        title="Download Grad-CAM"
+                      >
+                        <FiDownload size={16} />
+                      </button>
+                    )}
+                  </div>
+
+                  {data.gradcam_overlay ? (
+                    <div className="relative">
+                      <img
+                        src={`data:image/png;base64,${data.gradcam_overlay}`}
+                        alt={`${modelName} Grad-CAM`}
+                        className="w-full h-full object-contain bg-gray-50 rounded-lg"
+                      />
+                      <div className="absolute top-2 left-2">
+                        <span
+                          className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${
+                            data.prediction === "Kidney_stone"
+                              ? "bg-red-100 text-red-800"
+                              : "bg-green-100 text-green-800"
+                          }`}
+                        >
+                          {(data.confidence * 100).toFixed(1)}%
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="w-full h-48 bg-gray-100 rounded-lg flex items-center justify-center text-gray-500">
+                      No Grad-CAM available
+                    </div>
+                  )}
+                </div>
+              )
             )}
-          </AnimatedCard>
-        ))}
+          </div>
+        </div>
       </div>
     </div>
   );
