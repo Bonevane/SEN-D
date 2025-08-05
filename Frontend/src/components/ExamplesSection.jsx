@@ -1,45 +1,48 @@
-import React from "react";
 import { FiCheck, FiX, FiInfo } from "react-icons/fi";
 import AnimatedSection from "./AnimatedSection";
 import AnimatedCard from "./AnimatedCard";
 
-const ExampleCard = ({ title, description, isGood, tips }) => (
-  <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 hover:scale-102">
-    <div className="h-48 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-      <div className="text-center">
-        <div
-          className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3 ${
-            isGood ? "bg-green-100" : "bg-red-100"
-          }`}
-        >
-          {isGood ? (
-            <FiCheck className="text-2xl text-green-600" />
-          ) : (
-            <FiX className="text-2xl text-red-600" />
-          )}
-        </div>
-        <p className="text-gray-600 font-medium">{title}</p>
-      </div>
-    </div>
+const ExampleCard = ({
+  title,
+  description,
+  isGood,
+  tips,
+  imageUrl,
+  imageAlt,
+}) => (
+  <div className="bg-white rounded-3xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 hover:scale-102 will-change-transform">
+    <div className="h-auto flex items-center justify-center relative overflow-hidden">
+      <img src={imageUrl} alt={imageAlt} className="w-full h-full" />
 
-    <div className="p-6">
+      {/* Overlay badge */}
       <div
-        className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium mb-3 ${
-          isGood ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-        }`}
+        className="absolute top-0 left-0 right-0 flex items-center justify-center"
+        style={{ bottom: "35%" }}
       >
-        {isGood ? "Good Example" : "Poor Example"}
+        <div
+          className={`inline-flex items-center p-3 rounded-full text-sm font-medium ${
+            isGood ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+          } border border-white/30 shadow-lg backdrop-blur-sm bg-opacity-95`}
+        >
+          {isGood ? <FiCheck size={32} /> : <FiX size={32} />}
+        </div>
       </div>
 
-      <p className="text-gray-600 text-sm mb-4">{description}</p>
+      <div className="absolute p-6 bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md will-change-transform">
+        <h4 className="font-semibold text-[#212121] mb-2">{title}</h4>
+        <p className="text-gray-600 text-sm mb-4">{description}</p>
 
-      <div className="space-y-2">
-        {tips.map((tip, index) => (
-          <div key={index} className="flex items-start space-x-2 text-sm">
-            <FiInfo className="text-[#e91e4d] mt-0.5 flex-shrink-0" size={12} />
-            <span className="text-gray-600">{tip}</span>
-          </div>
-        ))}
+        <div className="space-y-2">
+          {tips.map((tip, index) => (
+            <div key={index} className="flex items-start space-x-2 text-sm">
+              <FiInfo
+                className="text-[#e91e4d] mt-0.5 flex-shrink-0"
+                size={16}
+              />
+              <span className="text-gray-600">{tip}</span>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   </div>
@@ -48,44 +51,54 @@ const ExampleCard = ({ title, description, isGood, tips }) => (
 const ExamplesSection = () => {
   const goodExamples = [
     {
-      title: "Clear CT Scan",
+      title: "Clear Frontal CT Scan",
       description:
-        "High-resolution abdominal CT scan with clear kidney structures visible",
+        "High-resolution frontal view CT scan with clear kidney structures and good contrast",
+      imageUrl: "good_1.png",
+      imageAlt: "Clear frontal medical CT scan showing kidney structures",
       tips: [
-        "Sharp image quality with good contrast",
-        "Kidney regions clearly visible",
-        "Appropriate medical imaging format",
+        "Sharp image quality with excellent contrast",
+        "Kidney regions clearly visible in frontal view",
+        "Single, focused CT slice without distractions",
       ],
     },
     {
-      title: "Proper Orientation",
+      title: "Cross-Section CT View",
       description:
-        "Correctly oriented medical image showing kidney cross-section",
+        "Properly oriented cross-sectional CT scan showing detailed kidney anatomy",
+      imageUrl: "good_2.png",
+      imageAlt: "Cross-sectional CT scan showing kidney anatomy",
       tips: [
-        "Standard radiological orientation",
-        "Clear anatomical structures",
-        "Sufficient image resolution (299x299 min)",
+        "Standard cross-sectional orientation",
+        "Clear anatomical structures visible",
+        "Appropriate DICOM windowing and contrast",
       ],
     },
   ];
 
   const poorExamples = [
     {
-      title: "Blurry Image",
-      description: "Low-quality or motion-blurred medical images",
+      title: "Multi-Panel CT Report",
+      description:
+        "Complete CT scan report with multiple views and annotations - too busy for AI analysis",
+      imageUrl: "bad_1.jpg",
+      imageAlt: "Multi-panel CT report with multiple views",
       tips: [
-        "Image quality too poor for analysis",
-        "Motion artifacts present",
-        "Insufficient detail for AI processing",
+        "Contains multiple CT slices in one image",
+        "Text annotations and measurements interfere",
+        "Crop to single view for better analysis",
       ],
     },
     {
-      title: "Wrong Image Type",
-      description: "Non-medical images or incorrect body regions",
+      title: "Non-Medical Equipment",
+      description:
+        "Medical equipment images like stethoscopes are not CT scans",
+      imageUrl: "bad_2.jpeg",
+      imageAlt: "Stethoscope - non-medical imaging example",
       tips: [
-        "Not a medical CT scan",
-        "Wrong anatomical region",
-        "Incompatible file format or size",
+        "Not a medical scan or imaging study",
+        "Equipment photos cannot be analyzed",
+        "Upload actual CT scan images only",
       ],
     },
   ];
@@ -111,7 +124,7 @@ const ExamplesSection = () => {
               </div>
               <span>Good Examples</span>
             </h3>
-            <div className="space-y-6">
+            <div className="space-y-8">
               {goodExamples.map((example, index) => (
                 <AnimatedCard
                   key={index}
@@ -132,7 +145,7 @@ const ExamplesSection = () => {
               </div>
               <span>Poor Examples</span>
             </h3>
-            <div className="space-y-6">
+            <div className="space-y-8">
               {poorExamples.map((example, index) => (
                 <AnimatedCard
                   key={index}
@@ -148,7 +161,7 @@ const ExamplesSection = () => {
 
         {/* Technical Requirements */}
         <AnimatedSection
-          className="mt-16 bg-[#FCE4EC]/20 rounded-2xl p-8 max-w-4xl mx-auto"
+          className="mt-16 bg-[#FCE4EC]/20 rounded-2xl p-8 max-w-4xl mx-auto border border-[#e91e4d]/30"
           animation="scaleIn"
           delay={600}
         >
@@ -176,6 +189,37 @@ const ExamplesSection = () => {
               </div>
               <h4 className="font-medium text-[#212121] mb-1">File Size</h4>
               <p className="text-sm text-gray-600">Maximum file size</p>
+            </div>
+          </div>
+        </AnimatedSection>
+
+        {/* Additional Tips Section */}
+        <AnimatedSection
+          className="mt-12 max-w-4xl mx-auto"
+          animation="scaleIn"
+          delay={700}
+        >
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
+            <div className="flex items-start space-x-3">
+              <FiInfo
+                className="text-blue-600 mt-[2px] flex-shrink-0"
+                size={20}
+              />
+              <div>
+                <h4 className="font-semibold text-blue-900 mb-2">
+                  Best Practices for Image Upload
+                </h4>
+                <ul className="text-sm text-blue-800 space-y-1">
+                  <li>• Upload single CT scan slices, not full reports</li>
+                  <li>• Ensure images show abdominal/kidney region clearly</li>
+                  <li>• Use images with good contrast and minimal noise</li>
+                  <li>• Avoid multi-panel reports with annotations</li>
+                  <li>
+                    • Check that anatomical structures are clearly visible
+                  </li>
+                  <li>• Crop images to show only the relevant CT slice</li>
+                </ul>
+              </div>
             </div>
           </div>
         </AnimatedSection>

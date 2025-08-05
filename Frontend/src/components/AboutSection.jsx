@@ -1,7 +1,7 @@
 import React from "react";
 import {
   FiLayers,
-  FiActivity,
+  FiBookOpen,
   FiShield,
   FiTrendingUp,
   FiDatabase,
@@ -43,36 +43,36 @@ const AboutSection = () => {
       icon: FiLayers,
       title: "StackedEnsembleNet",
       description:
-        "Advanced ensemble learning combining three state-of-the-art deep learning models",
+        "Custom ensemble network combining three state-of-the-art CNN architectures with meta-learner fusion",
       details: [
-        "InceptionV3 base model",
-        "InceptionResNetV2 architecture",
-        "Xception network",
-        "Meta-learner fusion approach",
+        "InceptionV3 with auxiliary classifiers",
+        "InceptionResNetV2 with residual connections",
+        "Xception with depthwise separable convolutions",
+        "Meta-learner for final classification",
       ],
     },
     {
       icon: MdScience,
       title: "Explainable AI",
       description:
-        "Grad-CAM visualizations provide interpretable insights into model predictions",
+        "Grad-CAM visualizations provide interpretable insights into model predictions for clinical validation",
       details: [
         "Gradient-based Class Activation Maps",
-        "Visual attention highlighting",
-        "Transparent decision making",
-        "Clinical interpretability",
+        "Visual attention highlighting on CT scans",
+        "Transparent decision making process",
+        "Assists radiologists in diagnosis verification",
       ],
     },
     {
       icon: FiShield,
-      title: "Medical Grade Accuracy",
+      title: "Medical Grade Performance",
       description:
-        "Rigorously tested and validated for clinical diagnostic applications",
+        "Rigorously tested on a plethora of clinical CT imaging data with proper hospital-grade validation",
       details: [
-        "99.2% classification accuracy",
-        "Cross-validated performance",
-        "Robust to image variations",
-        "Clinical dataset trained",
+        "98.74% classification accuracy",
+        "98.57% precision rate",
+        "98.96% recall sensitivity",
+        "Clinical dataset validated",
       ],
     },
   ];
@@ -80,36 +80,38 @@ const AboutSection = () => {
   const technicalSpecs = [
     {
       icon: FiDatabase,
-      title: "Dataset Information",
+      title: "Hybrid Dataset",
       description:
-        "Comprehensive medical imaging dataset for robust model training",
+        "Comprehensive medical imaging dataset from multiple clinical sources",
       details: [
-        "10,000+ CT scan images",
-        "Balanced dataset composition",
-        "Expert radiologist annotations",
-        "Multi-center data collection",
+        "Kaggle Axial CT Imaging Dataset",
+        "Elazığ Fethi Sekin City Hospital data",
+        "Extensive offline data augmentation",
+        "Balanced Kidney Stone vs Normal classes",
       ],
     },
     {
       icon: FiCpu,
-      title: "Processing Pipeline",
-      description: "Optimized image preprocessing and model inference pipeline",
+      title: "CNN Architecture",
+      description:
+        "Advanced deep learning pipeline with custom classifier heads and optimization",
       details: [
-        "Automatic image resizing (299x299)",
-        "Pixel normalization",
-        "Data augmentation techniques",
-        "Real-time inference < 2s",
+        "Custom classifier: 256 → 128 → 2 neurons",
+        "Batch normalization & ReLU activation",
+        "Dropout regularization",
+        "Adam optimizer with Cross Entropy Loss",
       ],
     },
     {
       icon: FiTrendingUp,
       title: "Performance Metrics",
-      description: "Comprehensive evaluation across multiple clinical metrics",
+      description:
+        "Comprehensive evaluation demonstrating strong diagnostic performance",
       details: [
-        "Sensitivity: 98.7%",
-        "Specificity: 99.5%",
-        "AUC-ROC: 0.996",
-        "F1-Score: 98.9%",
+        "Accuracy: 98.74%",
+        "Precision: 98.57%",
+        "Recall: 98.96%",
+        "F1-Score: 98.76%",
       ],
     },
   ];
@@ -129,8 +131,8 @@ const AboutSection = () => {
             About SEN-D
           </h2>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Advanced AI system for kidney stone detection using ensemble deep
-            learning and explainable AI
+            Deep Learning Classification using CNNs and Ensemble Methods for
+            automated kidney stone detection from axial CT scan images
           </p>
         </AnimatedSection>
 
@@ -141,14 +143,14 @@ const AboutSection = () => {
         >
           <AnimatedCard delay={0}>
             <StatCard
-              value="99.2%"
+              value="98.7%"
               label="Accuracy"
               description="Clinical validation"
             />
           </AnimatedCard>
           <AnimatedCard delay={100}>
             <StatCard
-              value="< 2s"
+              value="~ 3s"
               label="Processing"
               description="Real-time analysis"
             />
@@ -156,15 +158,15 @@ const AboutSection = () => {
           <AnimatedCard delay={200}>
             <StatCard
               value="3"
-              label="AI Models"
-              description="Ensemble approach"
+              label="CNN Models"
+              description="Ensemble fusion"
             />
           </AnimatedCard>
           <AnimatedCard delay={300}>
             <StatCard
               value="10K+"
-              label="Training Images"
-              description="Medical dataset"
+              label="Dataset"
+              description="Medical images"
             />
           </AnimatedCard>
         </AnimatedSection>
@@ -201,33 +203,59 @@ const AboutSection = () => {
           </div>
         </div>
 
-        {/* References */}
+        {/* Research Background */}
         <AnimatedSection delay={300}>
-          <div className="bg-white rounded-2xl shadow-lg p-8 max-w-4xl mx-auto hover:scale-102 transition-transform duration-300">
-            <h3 className="text-2xl font-semibold text-[#212121] mb-6 text-center">
-              Research & References
-            </h3>
+          <div className="bg-white rounded-2xl shadow-lg p-8 max-w-5xl mx-auto hover:scale-102 transition-transform duration-300">
+            <div className="flex items-center justify-center space-x-3 mb-6">
+              <div className="w-12 h-12 bg-[#FCE4EC] rounded-lg flex items-center justify-center">
+                <FiBookOpen className="text-2xl text-[#e91e4d]" />
+              </div>
+              <h3 className="text-2xl font-semibold text-[#212121]">
+                Research Foundation
+              </h3>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div>
                 <h4 className="font-semibold text-[#212121] mb-3">
-                  Deep Learning Models
+                  Reference Research
+                </h4>
+                <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                  <p className="text-sm text-gray-700 italic mb-2">
+                    "An Optimized Fusion of Deep Learning Models for Kidney
+                    Stone Detection from CT Images"
+                  </p>
+                  <p className="text-xs text-gray-600">
+                    Computers in Biology and Medicine, 2024 - ScienceDirect
+                  </p>
+                </div>
+                <h4 className="font-semibold text-[#212121] mb-3">
+                  Clinical Objective
                 </h4>
                 <ul className="space-y-2 text-sm text-gray-600">
-                  <li>• Szegedy et al. - Inception v3 Architecture</li>
-                  <li>• Szegedy et al. - Inception-ResNet Networks</li>
-                  <li>• Chollet - Xception Deep Learning</li>
-                  <li>• PyTorch Image Models (timm) Library</li>
+                  <li>• Binary classification: Kidney Stone vs Normal</li>
+                  <li>• Support early detection and diagnosis</li>
+                  <li>• Assist radiologists in CT scan analysis</li>
+                  <li>• Improve diagnostic efficiency and accuracy</li>
                 </ul>
               </div>
               <div>
                 <h4 className="font-semibold text-[#212121] mb-3">
-                  Explainable AI
+                  Data Sources
                 </h4>
                 <ul className="space-y-2 text-sm text-gray-600">
-                  <li>• Selvaraju et al. - Grad-CAM Visualization</li>
-                  <li>• Medical Image Analysis Standards</li>
-                  <li>• Clinical Decision Support Systems</li>
-                  <li>• FDA AI/ML Guidance Documentation</li>
+                  <li>• Kaggle Axial CT Imaging Dataset</li>
+                  <li>• Elazığ Fethi Sekin City Hospital, Turkey</li>
+                  <li>• Clinical-grade CT imaging data</li>
+                  <li>• Extensive offline augmentation techniques</li>
+                </ul>
+                <h4 className="font-semibold text-[#212121] mb-3 mt-4">
+                  Implementation Details
+                </h4>
+                <ul className="space-y-2 text-sm text-gray-600">
+                  <li>• PyTorch & timm library implementation</li>
+                  <li>• Modular, extensible platform design</li>
+                  <li>• Optimized for medical image analysis</li>
+                  <li>• Ready for clinical deployment</li>
                 </ul>
               </div>
             </div>

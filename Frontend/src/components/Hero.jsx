@@ -58,7 +58,7 @@ const Hero = () => {
 
       {/* Main Content */}
       <div className="relative z-10 text-center px-4 max-w-5xl mx-auto">
-        <div className="mb-8 animate-fade-in">
+        <div className="mb-6 animate-fade-in">
           <div className="inline-flex items-center space-x-3 mb-6">
             <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center transition-all duration-300 transform hover:scale-105 hover:shadow-2xl">
               <FiActivity className="text-3xl text-white" />
@@ -95,11 +95,11 @@ const Hero = () => {
 
           <div className="flex items-center space-x-6 text-white/80">
             <div className="text-center">
-              <div className="text-2xl font-bold text-white">99.2%</div>
+              <div className="text-2xl font-bold text-white">98.7%</div>
               <div className="text-sm">Accuracy</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-white">2s</div>
+              <div className="text-2xl font-bold text-white">3s</div>
               <div className="text-sm">Processing</div>
             </div>
             <div className="text-center">
