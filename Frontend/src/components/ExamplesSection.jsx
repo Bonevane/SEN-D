@@ -105,7 +105,7 @@ const ExamplesSection = () => {
 
   return (
     <section className="py-20 bg-white">
-      <div className="container mx-auto px-4">
+      <div className="container mx-auto px-4 overflow-hidden">
         <AnimatedSection className="text-center mb-12">
           <h2 className="text-4xl md:text-5xl font-bold text-[#212121] mb-4">
             Image Examples
