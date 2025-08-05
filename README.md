@@ -25,21 +25,21 @@ SEN-D uses a sophisticated ensemble of convolutional neural networks to provide 
 ### Model Architecture
 
 ```
-Input CT Scan (299x299)
-    ↓
-┌─────────────┬─────────────┬─────────────┐
-│ InceptionV3 │InceptionResV2│  Xception   │
-└─────────────┴─────────────┴─────────────┘
-    ↓               ↓               ↓
-┌─────────────┬─────────────┬─────────────┐
-│Custom Head  │Custom Head  │Custom Head  │
-│256→128→2    │256→128→2    │256→128→2    │
-└─────────────┴─────────────┴─────────────┘
-    ↓               ↓               ↓
-        StackedEnsembleNet Meta-Learner
+          Input CT Scan (299x299)
                     ↓
-            Final Classification
-        (Kidney Stone / Normal)
+┌─────────────┬─────────────-┬─────────────┐
+│ InceptionV3 │InceptionResV2│  Xception   │
+└─────────────┴─────────────-┴─────────────┘
+     ↓               ↓               ↓
+┌─────────────┬─────────────-┬─────────────┐
+│ Custom Head │ Custom Head  │ Custom Head │
+│  256→128→2  │  256→128→2   │  256→128→2  │
+└─────────────┴─────────────-┴─────────────┘
+     ↓               ↓               ↓
+      StackedEnsembleNet Meta-Learner
+                    ↓
+          Final Classification
+         (Kidney Stone / Normal)
 ```
 
 ### Technology Stack
