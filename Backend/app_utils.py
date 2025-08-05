@@ -1,7 +1,3 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException
-from fastapi.responses import JSONResponse
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
 import torch
 import torch.nn as nn
 from torchvision import transforms
@@ -9,36 +5,15 @@ from PIL import Image
 import numpy as np
 import time
 import os
-import sys
 import cv2
-import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import base64
 import io
-from typing import Dict, Optional, List
+import gc
+from typing import Dict
+from pydantic import BaseModel
 
-# Add the current directory to Python path to import architectures
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from architectures import CustomClassifier, FeatureExtractionModel, StackedEnsembleNet
-
-app = FastAPI(
-    title="SEN-D Kidney Stone Detection API",
-    description="AI-powered kidney stone detection from CT scan images",
-    version="1.0.0"
-)
-
-# Add CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173", "https://sen-d.vercel.app"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Global variables for model caching
-model = None
-device = None
+from architectures import StackedEnsembleNet
 
 class PredictionResponse(BaseModel):
     ensemble: Dict
@@ -64,16 +39,17 @@ class GradCAM:
     def _register_hooks(self):
         """Register forward and backward hooks"""
         def forward_hook(module, input, output):
-            self.activations = output
+            self.activations = output.detach()  # Detach to prevent gradient accumulation
         
         def backward_hook(module, grad_in, grad_out):
-            self.gradients = grad_out[0]
+            if grad_out[0] is not None:
+                self.gradients = grad_out[0].detach()  # Detach to prevent gradient accumulation
         
         # Find the target layer
         target_layer = self._find_target_layer()
         if target_layer is not None:
             self.hooks.append(target_layer.register_forward_hook(forward_hook))
-            self.hooks.append(target_layer.register_backward_hook(backward_hook))
+            self.hooks.append(target_layer.register_full_backward_hook(backward_hook))
     
     def _find_target_layer(self):
         """Find the target layer by name"""
@@ -96,15 +72,15 @@ class GradCAM:
         """Generate Class Activation Map"""
         try:
             # Forward pass
+            self.model.zero_grad()  # Clear gradients first
             output = self.model(input_tensor)
             
             if class_idx is None:
                 class_idx = output.argmax(dim=1).item()
             
             # Backward pass
-            self.model.zero_grad()
             target = output[0, class_idx]
-            target.backward(retain_graph=True)
+            target.backward(retain_graph=False)  # Don't retain graph
             
             if self.gradients is None or self.activations is None:
                 return None
@@ -117,7 +93,7 @@ class GradCAM:
             weights = torch.mean(gradients, dim=[1, 2])
             
             # Weighted combination of activation maps
-            cam = torch.zeros(activations.shape[1:], dtype=torch.float32)
+            cam = torch.zeros(activations.shape[1:], dtype=torch.float32, device=activations.device)
             for i, w in enumerate(weights):
                 cam += w * activations[i]
             
@@ -128,16 +104,29 @@ class GradCAM:
             if cam.max() > 0:
                 cam = cam / cam.max()
             
-            return cam.detach().cpu().numpy()
+            cam_numpy = cam.detach().cpu().numpy()
+            
+            # Clear intermediate tensors
+            del gradients, activations, weights, cam, output, target
+            
+            return cam_numpy
             
         except Exception as e:
             print(f"Error in generate_cam: {e}")
             return None
+        finally:
+            # Always clear gradients
+            self.model.zero_grad()
     
     def remove_hooks(self):
         """Remove all registered hooks"""
         for hook in self.hooks:
             hook.remove()
+        self.hooks.clear()
+        
+        # Clear stored gradients and activations
+        self.gradients = None
+        self.activations = None
 
 def create_heatmap_overlay(original_image, cam, alpha=0.4):
     """Create heatmap overlay on original image"""
@@ -154,6 +143,7 @@ def create_heatmap_overlay(original_image, cam, alpha=0.4):
             # Ensure the image is in RGB mode before conversion
             rgb_image = original_image.convert('RGB')
             img_array = np.array(rgb_image.resize((299, 299)))
+            rgb_image.close()  # Close PIL image to free memory
         else:
             img_array = original_image
         
@@ -178,7 +168,10 @@ def create_heatmap_overlay(original_image, cam, alpha=0.4):
         # Overlay heatmap on original image
         overlay = cv2.addWeighted(img_array, 1-alpha, heatmap, alpha, 0)
         
-        return overlay, heatmap
+        # Clean up intermediate arrays
+        del cam_resized, img_array, heatmap
+        
+        return overlay, None  # Don't return heatmap separately to save memory
         
     except Exception as e:
         print(f"Error in create_heatmap_overlay: {e}")
@@ -195,11 +188,6 @@ def get_target_layer_name(model_name):
 
 def load_model():
     """Load and cache the model"""
-    global model, device
-    
-    if model is not None:
-        return model, device
-    
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     
     try:
@@ -227,8 +215,14 @@ def preprocess_image(image):
                            std=[0.229, 0.224, 0.225])
     ])
     
-    image = image.convert('RGB')
-    return transform(image).unsqueeze(0)
+    image_rgb = image.convert('RGB')
+    tensor = transform(image_rgb).unsqueeze(0)
+    
+    # Close the converted image to free memory
+    if image_rgb != image:
+        image_rgb.close()
+    
+    return tensor
 
 def image_to_base64(image_array):
     """Convert numpy array to base64 string"""
@@ -241,8 +235,13 @@ def image_to_base64(image_array):
         
         # Convert to base64
         buffer = io.BytesIO()
-        pil_image.save(buffer, format='PNG')
+        pil_image.save(buffer, format='PNG', optimize=True)  # Add optimize=True
         image_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
+        
+        # Clean up
+        buffer.close()
+        pil_image.close()
+        del image_array  # Delete the array
         
         return image_base64
     except Exception as e:
@@ -251,43 +250,50 @@ def image_to_base64(image_array):
 
 def predict_all_models(ensemble_model, device, image):
     """Make predictions on all models (base models + ensemble) with Grad-CAM"""
+    gradcam_objects = []  # Keep track of GradCAM objects to clean up
+    
     try:
         input_tensor = preprocess_image(image).to(device)
         class_names = ["Kidney_stone", "Normal"]
-        results = {}
         
         start_time = time.time()
         
         # 1. Get predictions from individual base models with Grad-CAM
         individual_results = {}
-        base_predictions = []
         
         for model_name, base_model in ensemble_model.base_models.items():
             base_model.eval()
+            
+            # Prediction without gradients first
             with torch.no_grad():
                 outputs = base_model(input_tensor)
                 probabilities = torch.softmax(outputs, dim=1)[0]
                 predicted_class = torch.argmax(outputs, dim=1).item()
             
-            # Generate Grad-CAM for this model
+            # Clear the outputs tensor
+            del outputs
+            
+            # Generate Grad-CAM for this model (separate from prediction)
             target_layer = get_target_layer_name(model_name)
             gradcam = GradCAM(base_model, target_layer)
+            gradcam_objects.append(gradcam)  # Track for cleanup
             
             # Enable gradients for Grad-CAM
             input_tensor_grad = input_tensor.clone().detach().requires_grad_(True)
             cam = gradcam.generate_cam(input_tensor_grad, predicted_class)
-            gradcam.remove_hooks()
+            
+            # Clear the gradient tensor immediately
+            del input_tensor_grad
             
             # Create heatmap overlay
             overlay_base64 = None
-            heatmap_base64 = None
             if cam is not None:
                 try:
-                    overlay, heatmap = create_heatmap_overlay(image, cam)
+                    overlay, _ = create_heatmap_overlay(image, cam)
                     if overlay is not None:
                         overlay_base64 = image_to_base64(overlay)
-                    if heatmap is not None:
-                        heatmap_base64 = image_to_base64(heatmap)
+                        del overlay  # Free overlay immediately
+                    del cam  # Free cam array
                 except Exception as e:
                     print(f"Failed to create heatmap for {model_name}: {e}")
             
@@ -299,11 +305,13 @@ def predict_all_models(ensemble_model, device, image):
                     "Normal": float(probabilities[1])
                 },
                 "gradcam_overlay": overlay_base64,
-                "gradcam_heatmap": heatmap_base64
+                "gradcam_heatmap": None  # Remove separate heatmap to save memory
             }
-            base_predictions.append(probabilities)
+            
+            # Clear probabilities tensor
+            del probabilities
         
-        # 2. Get ensemble prediction (no Grad-CAM for ensemble as it's a meta-learner)
+        # 2. Get ensemble prediction
         ensemble_model.eval()
         with torch.no_grad():
             ensemble_outputs = ensemble_model(input_tensor)
@@ -318,6 +326,9 @@ def predict_all_models(ensemble_model, device, image):
                     "Normal": float(ensemble_probabilities[1])
                 }
             }
+            
+            # Clear ensemble tensors
+            del ensemble_outputs, ensemble_probabilities
         
         processing_time = time.time() - start_time
         
@@ -339,80 +350,17 @@ def predict_all_models(ensemble_model, device, image):
             "success": False,
             "message": f"Prediction failed: {str(e)}"
         }
-
-@app.on_event("startup")
-async def startup_event():
-    """Load model on startup"""
-    global model, device
-    model, device = load_model()
-    if model is None:
-        print("Failed to load model on startup!")
-
-@app.get("/")
-async def root():
-    """Health check endpoint"""
-    return {
-        "message": "SEN-D Kidney Stone Detection API",
-        "status": "healthy",
-        "model_loaded": model is not None,
-        "device": str(device) if device else "unknown"
-    }
-
-@app.get("/health")
-async def health_check():
-    """Detailed health check"""
-    return {
-        "status": "healthy",
-        "model_loaded": model is not None,
-        "device": str(device) if device else "unknown",
-        "num_base_models": len(model.base_models) if model else 0
-    }
-
-@app.post("/predict", response_model=PredictionResponse)
-async def predict(file: UploadFile = File(...)):
-    """
-    Predict kidney stone presence from CT scan image
-    
-    - **file**: CT scan image file (JPG, PNG, JPEG)
-    
-    Returns predictions from ensemble model and individual base models with Grad-CAM visualizations
-    """
-    # Validate file type
-    if not file.content_type.startswith('image/'):
-        raise HTTPException(status_code=400, detail="File must be an image")
-    
-    # Check if model is loaded
-    if model is None:
-        raise HTTPException(status_code=500, detail="Model not loaded")
-    
-    try:
-        # Read and process image
-        image_bytes = await file.read()
-        image = Image.open(io.BytesIO(image_bytes))
+    finally:
+        # CRITICAL: Clean up all GradCAM objects and their hooks
+        for gradcam in gradcam_objects:
+            gradcam.remove_hooks()
+        gradcam_objects.clear()
         
-        # Make predictions
-        results = predict_all_models(model, device, image)
+        # Clear input tensor
+        if 'input_tensor' in locals():
+            del input_tensor
         
-        return JSONResponse(content=results)
-        
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Prediction failed: {str(e)}")
-
-@app.get("/models")
-async def get_models():
-    """Get information about loaded models"""
-    if model is None:
-        return {"message": "No model loaded"}
-    
-    model_info = {
-        "ensemble_architecture": "StackedEnsembleNet",
-        "base_models": list(model.base_models.keys()),
-        "device": str(device),
-        "model_loaded": True
-    }
-    
-    return model_info
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+        # Force garbage collection
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+        gc.collect()
