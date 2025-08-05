@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Navigation from "./components/Navigation";
 import Hero from "./components/Hero";
 import PredictionSection from "./components/PredictionSection";
@@ -15,7 +15,7 @@ function App() {
       try {
         const isHealthy = await healthCheck();
         setApiStatus(isHealthy ? "connected" : "disconnected");
-      } catch (errorr) {
+      } catch (error) {
         setApiStatus("disconnected");
       }
     };
