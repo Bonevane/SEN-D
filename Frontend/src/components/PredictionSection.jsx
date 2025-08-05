@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { FiActivity, FiAlertCircle } from "react-icons/fi";
+import { FiActivity, FiAlertCircle, FiCheck } from "react-icons/fi";
 import AnimatedSection from "./AnimatedSection";
 import AnimatedCard from "./AnimatedCard";
 import ImageUpload from "./ImageUpload";
@@ -85,7 +85,7 @@ const PredictionSection = () => {
               <button
                 onClick={handlePredict}
                 disabled={isLoading}
-                className="px-8 py-4 bg-[#e91e4d] text-white font-semibold rounded-full hover:bg-[#ad1442] transition-all duration-300 transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-8 py-4 bg-[#e91e4d] text-white font-semibold rounded-full hover:bg-[#ad1442] transition-all duration-300 transform hover:scale-105 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 Analyze Image
               </button>
@@ -127,10 +127,15 @@ const PredictionSection = () => {
               animation="slideUp"
               delay={200}
             >
-              <AnimatedCard className="text-center" delay={0}>
-                <h3 className="text-2xl font-semibold text-[#212121] mb-2">
-                  Analysis Complete
-                </h3>
+              <AnimatedCard className="text-center pt-2" delay={0}>
+                <div className="flex items-center justify-center mb-4">
+                  <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                    <FiCheck className="text-green-600" />
+                  </div>
+                  <h3 className="text-2xl font-semibold text-[#212121]">
+                    Analysis Complete
+                  </h3>
+                </div>
                 <p className="text-gray-600">
                   Review the results from our ensemble AI model and individual
                   model predictions

@@ -1,10 +1,15 @@
-import React, { useState, useRef } from 'react';
-import { FiUpload, FiX, FiImage } from 'react-icons/fi';
-import { validateImageFile, createImagePreview } from '../utils/imageUtils';
+import React, { useState, useRef } from "react";
+import { FiUpload, FiX, FiImage } from "react-icons/fi";
+import { validateImageFile, createImagePreview } from "../utils/imageUtils";
 
-const ImageUpload = ({ onImageSelect, selectedImage, onClearImage, isLoading }) => {
+const ImageUpload = ({
+  onImageSelect,
+  selectedImage,
+  onClearImage,
+  isLoading,
+}) => {
   const [dragActive, setDragActive] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const fileInputRef = useRef(null);
 
   const handleFiles = (files) => {
@@ -17,16 +22,16 @@ const ImageUpload = ({ onImageSelect, selectedImage, onClearImage, isLoading }) 
       return;
     }
 
-    setError('');
+    setError("");
     onImageSelect(file);
   };
 
   const handleDrag = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    if (e.type === 'dragenter' || e.type === 'dragover') {
+    if (e.type === "dragenter" || e.type === "dragover") {
       setDragActive(true);
-    } else if (e.type === 'dragleave') {
+    } else if (e.type === "dragleave") {
       setDragActive(false);
     }
   };
@@ -35,7 +40,7 @@ const ImageUpload = ({ onImageSelect, selectedImage, onClearImage, isLoading }) 
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-    
+
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       handleFiles(e.dataTransfer.files);
     }
@@ -57,11 +62,12 @@ const ImageUpload = ({ onImageSelect, selectedImage, onClearImage, isLoading }) 
       {!selectedImage ? (
         <div
           className={`relative border-2 border-dashed rounded-2xl p-8 text-center transition-all duration-300 cursor-pointer
-            ${dragActive 
-              ? 'border-[#e91e4d] bg-[#FCE4EC]/50' 
-              : 'border-gray-300 hover:border-[#e91e4d] hover:bg-[#FCE4EC]/20'
+            ${
+              dragActive
+                ? "border-[#e91e4d] bg-[#FCE4EC]/50"
+                : "border-gray-300 hover:border-[#e91e4d] hover:bg-[#FCE4EC]/20"
             }
-            ${isLoading && 'pointer-events-none opacity-50'}
+            ${isLoading && "pointer-events-none opacity-50"}
           `}
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
@@ -77,12 +83,12 @@ const ImageUpload = ({ onImageSelect, selectedImage, onClearImage, isLoading }) 
             className="hidden"
             disabled={isLoading}
           />
-          
+
           <div className="space-y-4">
             <div className="w-20 h-20 mx-auto bg-[#FCE4EC] rounded-full flex items-center justify-center">
               <FiUpload className="text-3xl text-[#e91e4d]" />
             </div>
-            
+
             <div>
               <h3 className="text-xl font-semibold text-[#212121] mb-2">
                 Upload Medical Image
@@ -94,10 +100,10 @@ const ImageUpload = ({ onImageSelect, selectedImage, onClearImage, isLoading }) 
                 Supports JPG, JPEG, PNG (max 10MB)
               </p>
             </div>
-            
+
             <button
               type="button"
-              className="px-6 py-3 bg-[#e91e4d] text-white font-medium rounded-full hover:bg-[#ad1442] transition-colors disabled:opacity-50"
+              className="px-6 py-3 bg-[#e91e4d] text-white font-medium rounded-full hover:bg-[#ad1442] transition-colors disabled:opacity-50 cursor-pointer"
               disabled={isLoading}
             >
               Choose File
@@ -120,7 +126,7 @@ const ImageUpload = ({ onImageSelect, selectedImage, onClearImage, isLoading }) 
               </button>
             )}
           </div>
-          
+
           <div className="p-4">
             <img
               src={createImagePreview(selectedImage)}
@@ -135,7 +141,7 @@ const ImageUpload = ({ onImageSelect, selectedImage, onClearImage, isLoading }) 
           </div>
         </div>
       )}
-      
+
       {error && (
         <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
           <p className="text-red-600 text-sm">{error}</p>

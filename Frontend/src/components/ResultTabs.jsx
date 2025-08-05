@@ -22,7 +22,7 @@ const ResultCard = ({
           {processingTime && (
             <div className="flex items-center space-x-1 text-gray-500 text-sm">
               <FiClock size={14} />
-              <span>{processingTime}s</span>
+              <span>{processingTime.toFixed(1)}s</span>
             </div>
           )}
         </div>
@@ -184,7 +184,7 @@ const ResultTabs = ({ results }) => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center space-x-2 px-4 py-3 font-medium text-sm transition-colors border-b-2 ${
+              className={`flex items-center space-x-2 px-4 py-3 font-medium text-sm transition-colors border-b-2 cursor-pointer ${
                 activeTab === tab.id
                   ? "text-[#e91e4d] border-[#e91e4d]"
                   : "text-gray-500 border-transparent hover:text-gray-700"
